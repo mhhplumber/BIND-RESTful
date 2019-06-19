@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import dns.tsigkeyring
 import dns.resolver
 import dns.update
@@ -7,10 +5,14 @@ import dns.query
 import dns.zone
 import os
 
+from flask_cors import CORS
+from gevent.pywsgi import WSGIServer
+
 from dns.rdatatype import *
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+CORS(app)
 
 DNS_SERVER    = os.environ['SERVER']
 TSIG_USERNAME = os.environ['TSIG_USERNAME']
@@ -119,5 +121,16 @@ def dns_mgmt(domain, ttl, record_type, response):
         return jsonify({domain: 'DNS request failed'})
 
 
+# Helper function for running the server
+def start_server(listener):
+    WSGIServer(listener, app).serve_forever()
+
+# Runs the server
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    from gevent.server import _tcp_listener
+    from multiprocessing import Process
+    listener = _tcp_listener(('', 5000))
+    process_count=5
+    for i in range(process_count):
+        print(i)
+        Process(target=start_server, args=(listener,)).start()

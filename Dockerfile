@@ -1,11 +1,18 @@
-FROM python:2.7-slim
+FROM python:alpine3.9
+MAINTAINER Michael Humkey "michael.humkey1@t-mobile.com"
 
-COPY requirements.txt /tmp
-WORKDIR /tmp
+RUN apk update
+RUN apk add --no-cache --virtual .build-deps gcc musl-dev
+RUN apk add jq
+
+COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-COPY ./src /src
-WORKDIR /src
-EXPOSE 5000
+RUN apk del .build-deps
 
-ENTRYPOINT ["python", "bind-api.py"]
+COPY . ./
+
+ENTRYPOINT ["python"]
+CMD ["src/bind-api.py"]
+
+EXPOSE 5000
